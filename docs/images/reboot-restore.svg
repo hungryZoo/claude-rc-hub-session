@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="560" viewBox="0 0 1000 560" font-family="Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', 'Noto Sans CJK KR', sans-serif">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#57606a"/></marker>
+    <style>.t{fill:#1f2328} .s{fill:#57606a} .b{font-weight:700} .m{font-family:'SF Mono',Consolas,'DejaVu Sans Mono',monospace}</style>
+  </defs>
+  <rect x="1" y="1" width="998" height="558" rx="16" fill="#ffffff" stroke="#d0d7de"/>
+  <text x="32" y="44" font-size="20" class="t b">재부팅 자동 복구 흐름</text>
+  <text x="32" y="68" font-size="13" class="s">부팅 직후 로그인 없이 systemd가 복구 스크립트 실행, 목록 기준으로 윈도우와 원격 연결 복원</text>
+
+  <rect x="32" y="90" width="210" height="70" rx="10" fill="#f6f8fa" stroke="#d0d7de"/>
+  <text x="48" y="118" font-size="14" class="t b">서버 부팅</text>
+  <text x="48" y="140" font-size="12" class="s">전원 복구, 재시작</text>
+  <line x1="244" y1="125" x2="270" y2="125" stroke="#57606a" stroke-width="2" marker-end="url(#arr)"/>
+  <rect x="272" y="90" width="210" height="70" rx="10" fill="#EAF5EC" stroke="#4c9a5f"/>
+  <text x="288" y="118" font-size="14" class="t b">systemd 사용자 관리자</text>
+  <text x="288" y="140" font-size="11.5" class="s">linger 설정 시 로그인 전 시작</text>
+  <line x1="484" y1="125" x2="510" y2="125" stroke="#57606a" stroke-width="2" marker-end="url(#arr)"/>
+  <rect x="512" y="90" width="210" height="70" rx="10" fill="#EAF5EC" stroke="#4c9a5f"/>
+  <text x="528" y="118" font-size="13" class="t b m">claude-rc-restore</text>
+  <text x="528" y="140" font-size="11.5" class="s m">oneshot, KillMode=process</text>
+  <line x1="724" y1="125" x2="750" y2="125" stroke="#57606a" stroke-width="2" marker-end="url(#arr)"/>
+  <rect x="752" y="90" width="216" height="70" rx="10" fill="#fff" stroke="#8c959f"/>
+  <text x="768" y="118" font-size="13" class="t b m">restore.sh <tspan font-family="Pretendard, 'Malgun Gothic', 'Noto Sans CJK KR', sans-serif">시작</tspan></text>
+  <text x="768" y="140" font-size="12" class="s">tmux, 네트워크 준비 대기</text>
+
+  <!-- 반복 영역 -->
+  <rect x="360" y="200" width="608" height="300" rx="12" fill="#fbfcfd" stroke="#8c959f" stroke-dasharray="6 4"/>
+  <text x="952" y="224" font-size="12" text-anchor="end" class="s"><tspan class="m">windows.tsv</tspan> 각 줄 반복</text>
+  <path d="M860,162 L860,180 L478,180 L478,290" fill="none" stroke="#57606a" stroke-width="2" marker-end="url(#arr)"/>
+  <polygon points="478,295 578,350 478,405 378,350" fill="#fff" stroke="#57606a" stroke-width="1.6"/>
+  <text x="478" y="346" font-size="13" text-anchor="middle" class="t b">윈도우</text>
+  <text x="478" y="364" font-size="13" text-anchor="middle" class="t b">상태 확인</text>
+  <path d="M578,350 L614,350 M614,258 L614,446 M614,258 L646,258 M614,350 L646,350 M614,446 L646,446" fill="none" stroke="#57606a" stroke-width="2"/>
+  <line x1="640" y1="258" x2="648" y2="258" stroke="#57606a" stroke-width="2" marker-end="url(#arr)"/>
+  <line x1="640" y1="350" x2="648" y2="350" stroke="#57606a" stroke-width="2" marker-end="url(#arr)"/>
+  <line x1="640" y1="446" x2="648" y2="446" stroke="#57606a" stroke-width="2" marker-end="url(#arr)"/>
+  <rect x="650" y="228" width="300" height="60" rx="10" fill="#FBEEE8" stroke="#D97757"/>
+  <text x="666" y="252" font-size="13" class="t b">윈도우 없음</text>
+  <text x="666" y="273" font-size="12" class="s">윈도우 생성 후 claude rc 실행</text>
+  <rect x="650" y="320" width="300" height="60" rx="10" fill="#FFF8E1" stroke="#d4a72c"/>
+  <text x="666" y="344" font-size="13" class="t b">셸만 실행 중</text>
+  <text x="666" y="365" font-size="12" class="s">claude rc 재실행</text>
+  <rect x="650" y="416" width="300" height="60" rx="10" fill="#EAF5EC" stroke="#4c9a5f"/>
+  <text x="666" y="440" font-size="13" class="t b">claude 실행 중</text>
+  <text x="666" y="461" font-size="12" class="s">유지, 아무 작업 없음</text>
+
+  <!-- 마무리 -->
+  <line x1="358" y1="270" x2="314" y2="270" stroke="#57606a" stroke-width="2" marker-end="url(#arr)"/>
+  <text x="336" y="262" font-size="10.5" text-anchor="middle" class="s">반복 종료</text>
+  <rect x="40" y="230" width="270" height="80" rx="10" fill="#fff" stroke="#8c959f"/>
+  <text x="56" y="258" font-size="14" class="t b">연결 확인</text>
+  <text x="56" y="280" font-size="12" class="s">실행한 윈도우마다 15초 후</text>
+  <text x="56" y="297" font-size="12" class="s">화면에서 Connected 확인</text>
+  <line x1="175" y1="312" x2="175" y2="366" stroke="#57606a" stroke-width="2" marker-end="url(#arr)"/>
+  <rect x="40" y="370" width="270" height="90" rx="10" fill="#fff" stroke="#8c959f"/>
+  <text x="56" y="398" font-size="14" class="t b">로그 기록</text>
+  <text x="56" y="420" font-size="11.5" class="t m">~/dev/.hub/logs/</text>
+  <text x="56" y="437" font-size="11.5" class="t m">restore_YYYYMMDD-HHMMSS.log</text>
+  <text x="56" y="452" font-size="11" class="s">최근 30개 보관</text>
+
+  <rect x="32" y="516" width="936" height="30" rx="8" fill="#f6f8fa"/>
+  <text x="48" y="536" font-size="12" class="t">반복 실행 시에도 안전. 실행 중인 윈도우는 건드리지 않으므로 수동 실행이나 서비스 재시작에도 그대로 사용 가능.</text>
+</svg>

@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1020" height="520" viewBox="0 0 1020 520" font-family="Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', 'Noto Sans CJK KR', sans-serif">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#57606a"/></marker>
+    <marker id="arrO" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#D97757"/></marker>
+    <style>
+      .t{fill:#1f2328} .s{fill:#57606a} .b{font-weight:700}
+      .m{font-family:'SF Mono',Consolas,'DejaVu Sans Mono',monospace}
+    </style>
+  </defs>
+  <rect x="1" y="1" width="1018" height="518" rx="16" fill="#ffffff" stroke="#d0d7de"/>
+  <text x="32" y="44" font-size="20" class="t b">claude-rc 허브 세션 구조</text>
+  <text x="32" y="68" font-size="13" class="s">프로젝트마다 Remote Control 세션 1개, 허브 세션이 프로젝트 생성과 재부팅 복구 담당</text>
+
+  <!-- 원격 기기 -->
+  <rect x="32" y="100" width="210" height="380" rx="12" fill="#f6f8fa" stroke="#d0d7de"/>
+  <text x="48" y="126" font-size="14" class="t b">원격 기기</text>
+  <rect x="48" y="144" width="178" height="64" rx="10" fill="#fff" stroke="#d0d7de"/>
+  <rect x="62" y="156" width="22" height="40" rx="4" fill="none" stroke="#57606a" stroke-width="1.6"/>
+  <circle cx="73" cy="190" r="1.8" fill="#57606a"/>
+  <text x="96" y="172" font-size="13" class="t b">Claude 모바일 앱</text>
+  <text x="96" y="192" font-size="11" class="s">iOS, Android</text>
+  <rect x="48" y="222" width="178" height="64" rx="10" fill="#fff" stroke="#d0d7de"/>
+  <rect x="60" y="240" width="28" height="22" rx="3" fill="none" stroke="#57606a" stroke-width="1.6"/>
+  <line x1="60" y1="246" x2="88" y2="246" stroke="#57606a" stroke-width="1.6"/>
+  <text x="96" y="250" font-size="13" class="t b m">claude.ai/code</text>
+  <text x="96" y="270" font-size="11" class="s">웹 브라우저</text>
+  <rect x="48" y="304" width="178" height="160" rx="10" fill="#fff" stroke="#D97757"/>
+  <text x="60" y="326" font-size="11" class="s">허브 세션에 보내는 요청 예시</text>
+  <rect x="58" y="338" width="158" height="28" rx="14" fill="#FBEEE8"/>
+  <text x="70" y="357" font-size="12" class="t">foo 프로젝트 만들어줘</text>
+  <rect x="58" y="374" width="158" height="44" rx="14" fill="#FBEEE8"/>
+  <text x="70" y="393" font-size="12" class="t">bar를 my-org에</text>
+  <text x="70" y="409" font-size="12" class="t">프라이빗으로 초기화해줘</text>
+  <rect x="58" y="426" width="158" height="28" rx="14" fill="#FBEEE8"/>
+  <text x="70" y="445" font-size="12" class="t">org/baz 클론해줘</text>
+
+  <!-- Remote Control -->
+  <text x="289" y="262" font-size="12" text-anchor="middle" class="t b">Remote</text>
+  <text x="289" y="277" font-size="12" text-anchor="middle" class="t b">Control</text>
+  <text x="289" y="312" font-size="11" text-anchor="middle" class="s">HTTPS</text>
+
+  <!-- 서버 -->
+  <rect x="320" y="100" width="684" height="380" rx="12" fill="#f6f8fa" stroke="#d0d7de"/>
+  <text x="336" y="126" font-size="14" class="t b">Linux 서버</text>
+  <rect x="336" y="140" width="270" height="324" rx="10" fill="#fff" stroke="#8c959f"/>
+  <text x="352" y="164" font-size="13" class="t b">tmux 세션</text>
+  <text x="422" y="164" font-size="13" class="t b m">claude-rc</text>
+
+  <rect x="352" y="178" width="238" height="56" rx="8" fill="#FBEEE8" stroke="#D97757"/>
+  <circle cx="372" cy="206" r="11" fill="#D97757"/><text x="372" y="210" font-size="11" text-anchor="middle" fill="#fff" class="b">0</text>
+  <text x="392" y="201" font-size="13" class="t b">hub (허브 세션)</text>
+  <text x="392" y="221" font-size="11" class="s m">~/dev</text>
+
+  <rect x="352" y="248" width="238" height="56" rx="8" fill="#fff" stroke="#d0d7de"/>
+  <circle cx="372" cy="276" r="11" fill="#8c959f"/><text x="372" y="280" font-size="11" text-anchor="middle" fill="#fff" class="b">1</text>
+  <text x="392" y="271" font-size="13" class="t b">project-a</text>
+  <text x="392" y="291" font-size="11" class="s m">~/dev/project-a</text>
+
+  <rect x="352" y="318" width="238" height="56" rx="8" fill="#fff" stroke="#d0d7de"/>
+  <circle cx="372" cy="346" r="11" fill="#8c959f"/><text x="372" y="350" font-size="11" text-anchor="middle" fill="#fff" class="b">2</text>
+  <text x="392" y="341" font-size="13" class="t b">project-b</text>
+  <text x="392" y="361" font-size="11" class="s m">~/dev/project-b</text>
+
+  <rect x="352" y="388" width="238" height="56" rx="8" fill="#fff" stroke="#D97757" stroke-dasharray="5 4"/>
+  <circle cx="372" cy="416" r="11" fill="none" stroke="#D97757" stroke-dasharray="3 2"/><text x="372" y="420" font-size="11" text-anchor="middle" fill="#D97757" class="b">3</text>
+  <text x="392" y="411" font-size="13" class="t b">foo</text>
+  <text x="422" y="411" font-size="11" fill="#D97757" class="b">새로 생성</text>
+  <text x="392" y="431" font-size="11" class="s m">~/dev/foo</text>
+
+  <g font-size="10.5" class="m">
+    <rect x="516" y="194" width="64" height="22" rx="11" fill="#eef1f4"/><text x="548" y="209" text-anchor="middle" class="t">claude rc</text>
+    <rect x="516" y="264" width="64" height="22" rx="11" fill="#eef1f4"/><text x="548" y="279" text-anchor="middle" class="t">claude rc</text>
+    <rect x="516" y="334" width="64" height="22" rx="11" fill="#eef1f4"/><text x="548" y="349" text-anchor="middle" class="t">claude rc</text>
+    <rect x="516" y="404" width="64" height="22" rx="11" fill="#eef1f4"/><text x="548" y="419" text-anchor="middle" class="t">claude rc</text>
+  </g>
+
+  <line x1="246" y1="292" x2="333" y2="292" stroke="#57606a" stroke-width="2" marker-start="url(#arr)" marker-end="url(#arr)"/>
+
+  <!-- .hub -->
+  <rect x="716" y="140" width="272" height="170" rx="10" fill="#fff" stroke="#8c959f"/>
+  <text x="732" y="164" font-size="13" class="t b m">~/dev/.hub</text>
+  <text x="732" y="194" font-size="12" class="t m">windows.tsv</text><text x="850" y="194" font-size="12" class="s">윈도우 목록</text>
+  <text x="732" y="222" font-size="12" class="t m">restore.sh</text><text x="850" y="222" font-size="12" class="s">복구 스크립트</text>
+  <text x="732" y="250" font-size="12" class="t m">logs/</text><text x="850" y="250" font-size="12" class="s">실행 로그</text>
+  <text x="732" y="288" font-size="11" class="s">숨김 폴더, 반복 실행 시에도 안전</text>
+
+  <!-- systemd -->
+  <rect x="716" y="344" width="272" height="100" rx="10" fill="#EAF5EC" stroke="#4c9a5f"/>
+  <text x="732" y="370" font-size="13" class="t b">systemd 사용자 서비스</text>
+  <text x="732" y="394" font-size="12" class="t m">claude-rc-restore.service</text>
+  <text x="732" y="418" font-size="12" class="s">부팅 시 자동 실행 (linger)</text>
+  <line x1="852" y1="342" x2="852" y2="314" stroke="#4c9a5f" stroke-width="2" marker-end="url(#arr)"/>
+
+  <!-- 허브 → 목록, 스크립트 → tmux -->
+  <text x="653" y="188" font-size="11" text-anchor="middle" fill="#D97757" class="b">(1) 목록 추가</text>
+  <line x1="592" y1="198" x2="712" y2="198" stroke="#D97757" stroke-width="2" marker-end="url(#arrO)"/>
+  <text x="661" y="272" font-size="11" text-anchor="middle" class="t b">(2) 생성, 실행</text>
+  <line x1="714" y1="282" x2="610" y2="282" stroke="#57606a" stroke-width="2" marker-end="url(#arr)"/>
+</svg>

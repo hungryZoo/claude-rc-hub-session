@@ -1,0 +1,14 @@
+[Unit]
+Description=claude-rc tmux 세션 복구 (claude remote-control 윈도우)
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+# 스크립트 종료, 서비스 중지, 재시작 시 tmux 서버와 claude 프로세스 보존.
+# 이 줄이 없으면 스크립트 종료 직후 systemd가 같은 cgroup의 tmux 서버를 종료함.
+KillMode=process
+ExecStart=%h/dev/.hub/restore.sh
+TimeoutStartSec=600
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1012" height="320" viewBox="0 0 1012 320" font-family="Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', 'Noto Sans CJK KR', sans-serif">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#57606a"/></marker>
+    <style>.t{fill:#1f2328} .s{fill:#57606a} .b{font-weight:700} .m{font-family:'SF Mono',Consolas,'DejaVu Sans Mono',monospace}</style>
+  </defs>
+  <rect x="1" y="1" width="1010" height="318" rx="16" fill="#ffffff" stroke="#d0d7de"/>
+  <text x="32" y="44" font-size="20" class="t b">새 프로젝트 요청 처리</text>
+  <text x="32" y="68" font-size="13" class="s">허브 세션에 한 줄 요청, 5단계 파이프라인으로 원격 제어 연결까지 완료</text>
+
+  <g>
+    <rect x="32" y="92" width="172" height="156" rx="12" fill="#FBEEE8" stroke="#D97757"/>
+    <circle cx="56" cy="118" r="13" fill="#D97757"/><text x="56" y="123" font-size="13" text-anchor="middle" fill="#fff" class="b">1</text>
+    <text x="78" y="123" font-size="14" class="t b">요청 수신</text>
+    <text x="48" y="156" font-size="12" class="s">모바일 앱 또는</text>
+    <text x="48" y="174" font-size="12" class="s">claude.ai/code에서</text>
+    <text x="48" y="192" font-size="12" class="s">허브 세션에 요청</text>
+    <rect x="44" y="208" width="148" height="26" rx="13" fill="#fff"/>
+    <text x="118" y="226" font-size="12" text-anchor="middle" class="t">foo 만들어줘</text>
+  </g>
+  <line x1="206" y1="170" x2="224" y2="170" stroke="#57606a" stroke-width="2" marker-end="url(#arr)"/>
+  <g>
+    <rect x="226" y="92" width="172" height="156" rx="12" fill="#fff" stroke="#d0d7de"/>
+    <circle cx="250" cy="118" r="13" fill="#8c959f"/><text x="250" y="123" font-size="13" text-anchor="middle" fill="#fff" class="b">2</text>
+    <text x="272" y="123" font-size="14" class="t b">폴더 준비</text>
+    <text x="242" y="156" font-size="12" class="m t">~/dev/foo</text><text x="312" y="156" font-size="12" class="s">생성</text>
+    <text x="242" y="174" font-size="12" class="s">또는 기존 레포 클론</text>
+    <rect x="238" y="194" width="148" height="40" rx="8" fill="#f6f8fa" stroke="#d0d7de" stroke-dasharray="4 3"/>
+    <text x="250" y="211" font-size="11" class="s b">선택</text>
+    <text x="250" y="226" font-size="11" class="s">GitHub 레포 초기화</text>
+  </g>
+  <line x1="400" y1="170" x2="418" y2="170" stroke="#57606a" stroke-width="2" marker-end="url(#arr)"/>
+  <g>
+    <rect x="420" y="92" width="172" height="156" rx="12" fill="#fff" stroke="#d0d7de"/>
+    <circle cx="444" cy="118" r="13" fill="#8c959f"/><text x="444" y="123" font-size="13" text-anchor="middle" fill="#fff" class="b">3</text>
+    <text x="466" y="123" font-size="14" class="t b">목록 추가</text>
+    <text x="436" y="156" font-size="12" class="m t">windows.tsv</text>
+    <text x="436" y="174" font-size="12" class="s">에 한 줄 추가</text>
+    <rect x="432" y="194" width="148" height="40" rx="8" fill="#f6f8fa"/>
+    <text x="444" y="219" font-size="11.5" class="m t">foo  ~/dev/foo</text>
+  </g>
+  <line x1="594" y1="170" x2="612" y2="170" stroke="#57606a" stroke-width="2" marker-end="url(#arr)"/>
+  <g>
+    <rect x="614" y="92" width="172" height="156" rx="12" fill="#fff" stroke="#d0d7de"/>
+    <circle cx="638" cy="118" r="13" fill="#8c959f"/><text x="638" y="123" font-size="13" text-anchor="middle" fill="#fff" class="b">4</text>
+    <text x="660" y="123" font-size="14" class="t b">스크립트 실행</text>
+    <text x="630" y="156" font-size="12" class="m t">restore.sh</text>
+    <text x="630" y="174" font-size="12" class="s">새 tmux 윈도우 생성</text>
+    <text x="630" y="192" font-size="12" class="s">기존 윈도우는 유지</text>
+    <rect x="626" y="202" width="148" height="38" rx="8" fill="#eef1f4"/>
+    <text x="700" y="217" font-size="10.5" text-anchor="middle" class="m t">claude rc</text>
+    <text x="700" y="232" font-size="10.5" text-anchor="middle" class="m t">--spawn=same-dir</text>
+  </g>
+  <line x1="788" y1="170" x2="806" y2="170" stroke="#57606a" stroke-width="2" marker-end="url(#arr)"/>
+  <g>
+    <rect x="808" y="92" width="172" height="156" rx="12" fill="#EAF5EC" stroke="#4c9a5f"/>
+    <circle cx="832" cy="118" r="13" fill="#4c9a5f"/><text x="832" y="123" font-size="13" text-anchor="middle" fill="#fff" class="b">5</text>
+    <text x="854" y="123" font-size="14" class="t b">확인, 보고</text>
+    <text x="824" y="156" font-size="12" class="s">로그에서 Connected</text>
+    <text x="824" y="174" font-size="12" class="s">문자열 확인</text>
+    <text x="824" y="192" font-size="12" class="s">폴더, 윈도우 번호,</text>
+    <text x="824" y="210" font-size="12" class="s">환경 이름 보고</text>
+  </g>
+  <rect x="32" y="266" width="948" height="34" rx="10" fill="#f6f8fa" stroke="#d0d7de"/>
+  <text x="48" y="288" font-size="12.5" class="t"><tspan class="b">결과</tspan>  원격 기기의 환경 목록에 foo 추가, 바로 접속 가능. 재부팅 후에도 목록 기준 자동 복구.</text>
+</svg>

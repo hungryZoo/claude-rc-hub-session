@@ -1,0 +1,6 @@
+# claude-rc tmux 윈도우 목록
+# 형식: 윈도우명<TAB>폴더 절대경로   (구분자는 반드시 탭 문자)
+# 위에서부터 순서대로 복구. 첫 줄은 허브 세션 자신.
+hub	/home/USER/dev
+project-a	/home/USER/dev/project-a
+project-b	/home/USER/dev/project-b
