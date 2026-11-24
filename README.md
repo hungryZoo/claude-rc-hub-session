@@ -2,6 +2,12 @@
 
 서버 한 대의 `~/dev` 아래 프로젝트마다 Claude Code Remote Control 세션을 하나씩 띄우고, 이 세션들을 **허브 세션** 하나가 생성하고 관리하는 구성입니다. 휴대폰이나 `claude.ai/code`에서 "foo 프로젝트 만들어줘" 한 줄을 보내면 폴더 준비, GitHub 레포 초기화, tmux 윈도우 생성, 원격 연결까지 끝납니다. 서버가 재부팅되면 systemd 사용자 서비스가 같은 구성을 자동으로 복구합니다.
 
+Claude Code 플러그인 `rc-hub`로 설치합니다.
+
+```bash
+claude plugin install rc-hub --marketplace hungryZoo/claude-rc-hub-session
+```
+
 ![claude-rc 허브 세션 구조](docs/images/architecture.svg)
 
 ## 목차
@@ -12,7 +18,7 @@
 4. [설치 절차](#4-설치-절차)
 5. [사용 방법](#5-사용-방법)
 6. [재부팅 자동 복구](#6-재부팅-자동-복구)
-7. [프롬프트 원문](#7-프롬프트-원문)
+7. [스킬과 프롬프트 원문](#7-스킬과-프롬프트-원문)
 8. [문제 해결](#8-문제-해결)
 9. [파일 구조](#9-파일-구조)
 
@@ -22,7 +28,8 @@
 |---|---|
 | Remote Control | 로컬 머신의 Claude Code 세션을 Claude 모바일 앱이나 `claude.ai/code`에서 조작하는 기능. `claude remote-control`, 줄여서 `claude rc`로 실행. |
 | 프로젝트 세션 | 프로젝트 폴더마다 tmux 윈도우 1개, 그 안에서 실행 중인 `claude rc` 1개. 원격 기기에서는 프로젝트별 환경으로 표시. |
-| 허브 세션 | `~/dev`에서 실행되는 프로젝트 세션. `~/dev/CLAUDE.md` 지침에 따라 새 프로젝트 요청을 처리. |
+| 허브 세션 | `~/dev`에서 실행되는 프로젝트 세션. 새 프로젝트 요청을 받아 처리. |
+| 스킬 | 요청 내용이 설명문과 맞으면 Claude Code가 자동으로 불러오는 절차 문서. 명령어 입력 없이 자연어 요청으로 동작. |
 | 복구 체계 | 윈도우 목록 파일, 복구 스크립트, systemd 사용자 서비스로 구성된 재부팅 자동 복구 장치. |
 
 이 구성이 적합한 경우는 다음과 같습니다.
@@ -31,18 +38,23 @@
 - 터미널 접속 없이 휴대폰에서 새 프로젝트를 시작하고 싶은 경우
 - 서버 재부팅 후 프로젝트 세션을 하나씩 다시 띄우는 작업을 없애고 싶은 경우
 
+별도 프로그램이나 명령어 대신 스킬로 만든 이유는 휴대폰 사용 때문입니다. 원격 세션에서는 자연어 요청만 보내면 되고, 허브 세션의 Claude가 스킬 절차대로 서버에서 작업합니다.
+
 ## 2. 구성 요소
+
+![rc-hub 플러그인 구성](docs/images/plugin-layout.svg)
 
 | 구성 요소 | 위치 | 역할 |
 |---|---|---|
-| tmux 세션 | `claude-rc` | 프로젝트별 윈도우 보관. 0번 윈도우가 허브 세션. |
-| 허브 지침 | `~/dev/CLAUDE.md` | 허브 세션 역할과 새 프로젝트 처리 절차. Claude Code가 세션 시작 시 자동으로 읽음. |
+| 스킬 `new-project` | 플러그인 `skills/new-project` | 프로젝트 생성, 레포 클론, 이름 변경, 제거 절차. 요청 내용에 따라 자동 호출. |
+| 스킬 `setup` | 플러그인 `skills/setup` | 초기 설정. `/rc-hub:setup`으로 수동 실행. |
+| tmux 세션 | `claude-rc` | 프로젝트별 윈도우 보관. 첫 윈도우가 허브 세션. |
 | 윈도우 목록 | `~/dev/.hub/windows.tsv` | `윈도우명<TAB>폴더 절대경로` 형식. 복구 순서 기준. |
 | 복구 스크립트 | `~/dev/.hub/restore.sh` | 목록 기준 윈도우 생성과 `claude rc` 실행. 반복 실행 시에도 안전. |
 | 실행 로그 | `~/dev/.hub/logs/` | 복구 스크립트 실행 기록. 최근 30개 보관. |
 | systemd 서비스 | `~/.config/systemd/user/claude-rc-restore.service` | 부팅 시 복구 스크립트 실행. |
 
-복구 관련 파일은 모두 숨김 폴더 `~/dev/.hub`에 모아 프로젝트 폴더 목록을 깨끗하게 유지합니다.
+플러그인은 Claude Code 세션이 떠 있을 때만 동작합니다. 그래서 부팅 시 실행은 systemd 서비스가 맡고, 플러그인은 그 서비스를 설치하는 역할까지 합니다. 플러그인 설치 경로는 업데이트 때마다 바뀌므로 서비스는 `~/dev/.hub`에 복사한 설치본을 실행합니다.
 
 ## 3. 사전 준비
 
@@ -52,58 +64,60 @@
 | tmux | `tmux -V` |
 | Claude Code CLI와 구독 Claude 계정 로그인 | `claude --version`, `claude rc --help` |
 | GitHub CLI 로그인 (레포 생성과 클론에 사용) | `gh auth status` |
-| 프로젝트 상위 폴더 | `mkdir -p ~/dev` |
 
 Remote Control은 구독이 있는 Claude 계정으로 로그인한 상태에서만 동작합니다. `claude rc --help`의 요구 사항 항목에서 확인할 수 있습니다.
 
 ## 4. 설치 절차
 
-두 가지 방법 중 하나를 선택합니다. 프롬프트 방식은 Claude가 환경 확인, 파일 배치, 검증까지 수행합니다.
+### 4.1 플러그인 방식 (권장)
 
-### 4.1 프롬프트 방식 (권장)
-
-1. 서버에서 일반 Claude Code 세션을 시작합니다.
+1. **플러그인 설치**
    ```bash
-   cd ~/dev && claude
+   claude plugin install rc-hub --marketplace hungryZoo/claude-rc-hub-session
    ```
-2. [`prompts/setup-prompt.md`](prompts/setup-prompt.md) 내용을 붙여넣습니다. 설정값의 `<GITHUB_ID>`, `<EMAIL>`, `<ORG>`는 미리 바꿔 둡니다.
-3. Claude가 환경 확인, 파일 배치, 4단계 검증, 서비스 등록을 수행하고 결과를 보고합니다.
-4. 보고에 linger 설정 안내가 있으면 직접 실행합니다.
+   `--marketplace` 옵션이 없는 Claude Code 버전에서는 두 단계로 설치합니다.
+   ```bash
+   claude plugin marketplace add hungryZoo/claude-rc-hub-session
+   claude plugin install rc-hub@hungryzoo
+   ```
+2. **초기 설정 실행**: 서버 터미널에서 Claude Code를 열고 설정 스킬을 실행합니다.
+   ```bash
+   mkdir -p ~/dev && cd ~/dev && claude
+   ```
+   ```
+   /rc-hub:setup
+   ```
+   프로젝트 상위 폴더를 바꾸려면 `/rc-hub:setup ~/work`처럼 경로를 붙입니다.
+3. **결과 확인**: Claude가 환경 확인, 파일 설치, 계획 확인, 세션 시작을 수행하고 결과를 보고합니다. 보고에 linger 안내가 있으면 직접 실행합니다.
    ```bash
    sudo loginctl enable-linger "$USER"
    ```
-5. 설정용 세션을 종료합니다. 이후에는 tmux `claude-rc` 세션의 hub 윈도우가 허브 세션 역할을 맡습니다.
+4. **설정용 세션 종료**: 이후에는 tmux `claude-rc` 세션의 hub 윈도우가 허브 세션 역할을 맡습니다.
 
-### 4.2 수동 방식
+### 4.2 프롬프트 방식
 
-1. **파일 배치**
-   ```bash
-   git clone https://github.com/hungryZoo/claude-rc-hub-session.git /tmp/claude-rc-hub-session
-   mkdir -p ~/dev/.hub ~/.config/systemd/user
-   cp /tmp/claude-rc-hub-session/hub/restore.sh ~/dev/.hub/
-   cp /tmp/claude-rc-hub-session/templates/CLAUDE.md ~/dev/CLAUDE.md
-   cp /tmp/claude-rc-hub-session/systemd/claude-rc-restore.service ~/.config/systemd/user/
-   printf 'hub\t%s/dev\n' "$HOME" > ~/dev/.hub/windows.tsv
-   ```
-2. **설정값 입력**: `~/dev/CLAUDE.md`의 `<GITHUB_ID>`, `<EMAIL>`, `<ORG>`를 바꿉니다.
-3. **계획 확인과 첫 실행**
-   ```bash
-   HUB_DRY_RUN=1 ~/dev/.hub/restore.sh   # 실행 없이 계획만 출력
-   ~/dev/.hub/restore.sh                 # claude-rc 세션과 hub 윈도우 시작
-   ```
-4. **폴더 신뢰 승인**: 처음 실행하는 폴더는 신뢰 확인 프롬프트가 뜹니다. 로그에 "대기"가 보이면 윈도우에 들어가 `y`를 입력하고 `Ctrl-b d`로 빠져나옵니다.
-   ```bash
-   tmux attach -t claude-rc
-   ```
-5. **부팅 시 자동 실행 등록**
-   ```bash
-   systemctl --user daemon-reload
-   systemctl --user enable --now claude-rc-restore.service
-   loginctl show-user "$USER" -p Linger   # Linger=no면 아래 명령 실행
-   sudo loginctl enable-linger "$USER"
-   ```
+플러그인을 쓰지 않는 방법입니다. `~/dev`에서 Claude Code 세션을 열고 [`prompts/setup-prompt.md`](prompts/setup-prompt.md) 내용을 붙여넣습니다. 설정값의 `<GITHUB_ID>`, `<EMAIL>`, `<ORG>`는 미리 바꿔 둡니다. 이 방식에서는 스킬 대신 `~/dev/CLAUDE.md` 지침이 새 프로젝트 절차를 담당합니다.
 
-`~/dev` 대신 다른 상위 폴더를 쓰면 서비스 파일의 `ExecStart` 경로와 `windows.tsv`의 hub 경로를 함께 바꿉니다.
+### 4.3 수동 방식
+
+```bash
+git clone https://github.com/hungryZoo/claude-rc-hub-session.git /tmp/claude-rc-hub-session
+/tmp/claude-rc-hub-session/hub/install.sh ~/dev       # 복구 스크립트, 목록, 서비스 설치
+cp /tmp/claude-rc-hub-session/templates/CLAUDE.md ~/dev/CLAUDE.md   # 설정값 수정 필요
+HUB_DRY_RUN=1 ~/dev/.hub/restore.sh                   # 실행 없이 계획만 출력
+systemctl --user restart claude-rc-restore.service    # claude-rc 세션과 hub 윈도우 시작
+```
+
+처음 실행하는 폴더는 신뢰 확인 프롬프트가 뜹니다. 로그에 "대기"가 보이면 `tmux attach -t claude-rc`로 들어가 `y`를 입력하고 `Ctrl-b d`로 빠져나옵니다.
+
+### 4.4 업데이트
+
+```bash
+claude plugin marketplace update hungryzoo
+claude plugin update rc-hub@hungryzoo
+```
+
+플러그인에 `version`을 고정하지 않았으므로 레포의 새 커밋이 그대로 업데이트로 전달됩니다. 업데이트 후 `/rc-hub:setup`을 다시 실행하면 `~/dev/.hub`의 설치본이 갱신됩니다. 기존 파일은 백업하고, 실행 중인 윈도우는 건드리지 않습니다. 이미 실행 중인 세션에는 `/reload-plugins`를 입력하거나 세션을 새로 시작해야 반영됩니다.
 
 ## 5. 사용 방법
 
@@ -115,10 +129,11 @@ Claude 모바일 앱이나 `claude.ai/code`의 환경 목록에서 hub 환경(`~
 |---|---|
 | foo 프로젝트 만들어줘 | `~/dev/foo` 생성, 목록 추가, 윈도우 생성과 `claude rc` 실행 |
 | bar 프로젝트를 my-org에 프라이빗으로 초기화해줘 | 위 동작과 함께 `git init`, 초기 커밋, `gh repo create my-org/bar --private` |
-| https://github.com/org/baz 클론해서 원격제어 만들어줘 | `gh repo clone org/baz`, 목록 추가, 윈도우 생성과 `claude rc` 실행 |
-| foo 프로젝트 원격제어 내려줘 | 목록에서 줄 삭제, 윈도우 종료. 폴더 삭제는 확인 후에만 수행. |
+| 내 깃허브에서 baz 클론해서 리모트 세션 열어줘 | `gh repo clone`, 목록 추가, 윈도우 생성과 `claude rc` 실행 |
+| foo를 fooBar로 바꿔줘 | 세션 종료, 폴더 이름 변경, 목록 수정, 대화 기록 복사, 새 경로에서 세션 시작 |
+| foo 세션 내려줘 | 목록에서 줄 삭제, 윈도우 종료. 폴더 삭제는 확인 후에만 수행. |
 
-허브 세션이 연결 확인을 마치면 원격 기기의 환경 목록에 새 프로젝트가 나타납니다. 그 환경을 선택하면 해당 프로젝트 폴더에서 바로 작업할 수 있습니다.
+허브 세션이 연결 확인을 마치면 원격 기기의 환경 목록에 새 프로젝트가 나타납니다. 그 환경을 선택하면 해당 프로젝트 폴더에서 바로 작업할 수 있습니다. 스킬은 그 머신의 모든 세션에서 쓸 수 있으므로, 허브가 아닌 프로젝트 세션에서 요청해도 같은 절차가 실행됩니다.
 
 서버에서 직접 확인할 때는 다음 명령을 씁니다.
 
@@ -142,7 +157,15 @@ tail -n 30 "$(ls -1t ~/dev/.hub/logs/restore_*.log | head -1)"
 | 다른 프로그램 실행 중 | 건너뜀 |
 | 목록의 폴더 없음 | 건너뜀 |
 
-실행한 윈도우는 15초 뒤 화면에서 `Connected` 문자열을 찾아 연결 여부를 로그에 남깁니다. 재부팅 후에는 원격 연결이 새로 만들어지므로 환경 이름이 바뀔 수 있습니다. 이전 대화 기록 파일은 `~/.claude` 아래에 그대로 남아 있습니다.
+실행한 윈도우는 3초 간격으로 화면을 확인해 결과를 로그에 남깁니다. 기본 대기 시간은 60초입니다.
+
+| 로그 표시 | 의미 |
+|---|---|
+| 연결 확인 | 화면에 `Connected` 표시. 원격 연결 완료. |
+| 대기 | 폴더 신뢰 확인 프롬프트가 떠 있음. 해당 윈도우에 `y` 입력 필요. |
+| 경고 | 대기 시간 안에 연결 미확인. 화면의 마지막 줄을 함께 기록. |
+
+재부팅 후에는 원격 연결이 새로 만들어지므로 환경 이름이 바뀔 수 있습니다. 이전 대화 기록 파일은 `~/.claude` 아래에 그대로 남아 있습니다.
 
 **수동 실행과 상태 확인**
 
@@ -163,6 +186,7 @@ journalctl --user -u claude-rc-restore.service -b      # 이번 부팅의 서비
 | `HUB_TMUX_BIN` | 자동 감지 | tmux 실행 파일 경로 |
 | `HUB_TMUX_SOCKET` | 기본 소켓 | `tmux -L` 소켓 이름. 실제 세션과 분리된 테스트에 사용. |
 | `HUB_CMD` | `claude rc --spawn=same-dir` | 윈도우에서 실행할 명령 |
+| `HUB_CHECK_TIMEOUT` | `60` | 연결 확인 대기 시간(초). `HUB_CMD`를 지정하면 기본 `0`으로 확인 생략. |
 
 **재부팅 없이 복구 시험하기**
 
@@ -180,13 +204,22 @@ tmux -L hubtest kill-server                    # 시험 종료
 
 systemd는 기본적으로 서비스의 메인 프로세스가 끝나면 같은 cgroup에 남은 프로세스를 모두 종료합니다. 부팅 시 tmux 서버는 복구 스크립트의 자식으로 시작되므로 이 설정이 없으면 스크립트 종료 직후 tmux 서버와 모든 `claude rc`가 함께 종료됩니다. `KillMode=process`를 넣으면 서비스를 중지하거나 재시작해도 tmux 서버가 유지됩니다.
 
-## 7. 프롬프트 원문
+## 7. 스킬과 프롬프트 원문
+
+플러그인 방식에서 쓰는 스킬 원문은 다음 파일에 있습니다.
+
+| 스킬 | 파일 | 호출 방식 |
+|---|---|---|
+| `rc-hub:new-project` | [`skills/new-project/SKILL.md`](skills/new-project/SKILL.md) | 자동. 프로젝트 생성, 클론, 이름 변경, 제거 요청 시 |
+| `rc-hub:setup` | [`skills/setup/SKILL.md`](skills/setup/SKILL.md) | 수동. `/rc-hub:setup [상위 폴더]` |
+
+플러그인 없이 쓰는 경우의 프롬프트와 지침 원문입니다.
 
 <details>
 <summary><b>초기 설정 프롬프트</b> (<code>prompts/setup-prompt.md</code>, 새 머신에서 한 번 사용)</summary>
 
 ```markdown
-너는 이 머신에 "claude-rc 허브 세션" 환경을 구성한다.
+너는 이 머신에 "claude-rc 허브 세션" 환경을 플러그인 없이 구성한다.
 참고 레포: https://github.com/hungryZoo/claude-rc-hub-session
 
 ## 설정값
@@ -197,33 +230,25 @@ systemd는 기본적으로 서비스의 메인 프로세스가 끝나면 같은 
 
 ## 1. 환경 확인
 - tmux 실행 경로와 버전. snap 설치이고 `tmux -V`가 출력 없이 끝나면 /snap/tmux/current/usr/local/bin/tmux 직접 호출.
-- claude CLI 버전과 `claude rc --help` 동작, gh 로그인 상태, git 버전과 전역 사용자 정보
-- `systemctl --user` 동작 여부, `loginctl show-user $USER -p Linger` 값
-- Bash 샌드박스가 tmux 소켓 접근을 막으면 tmux 명령만 샌드박스 해제로 실행.
+- `claude rc --help` 동작, gh 로그인 상태, git 버전과 전역 사용자 정보, `systemctl --user show-environment` 동작
+- Bash 샌드박스가 tmux 소켓 접근을 막으면 tmux, systemctl, 설치 스크립트, 복구 스크립트 호출만 샌드박스 해제로 실행.
 
-## 2. 파일 배치
-- 참고 레포를 임시 폴더에 클론.
-- hub/restore.sh → ~/dev/.hub/restore.sh (실행 권한 부여)
-- ~/dev/.hub/windows.tsv 생성. 첫 줄은 `hub<TAB>$HOME/dev`. tmux `claude-rc` 세션이 이미 있으면 기존 윈도우 이름과 경로를 목록에 반영.
+## 2. 설치
+- 참고 레포를 임시 폴더에 클론하고 `hub/install.sh ~/dev` 실행. 복구 스크립트, 윈도우 목록, systemd 사용자 서비스가 배치됨.
+- tmux `claude-rc` 세션이 이미 있으면 기존 윈도우 이름과 경로를 ~/dev/.hub/windows.tsv에 반영.
 - templates/CLAUDE.md → ~/dev/CLAUDE.md, 설정값 채움. 기존 파일이 있으면 덮어쓰지 말고 병합안 제시.
-- systemd/claude-rc-restore.service → ~/.config/systemd/user/. 상위 폴더가 ~/dev가 아니면 ExecStart 경로 수정.
 
-## 3. 검증 (4단계)
+## 3. 검증과 시작
 (1) `HUB_DRY_RUN=1 ~/dev/.hub/restore.sh` 로 계획 확인
-(2) 테스트 소켓으로 재부팅 상황 재현:
+(2) 테스트 소켓으로 재부팅 상황 재현 후 정리:
     `systemd-run --user --wait -p KillMode=process -E HUB_TMUX_SOCKET=hubtest -E 'HUB_CMD=claude --version; sleep 300' ~/dev/.hub/restore.sh`
-    → 모든 윈도우 생성과 각 윈도우의 claude 버전 출력 확인
-(3) 같은 테스트 세션에 한 번 더 실행해 "건너뜀" 또는 "유지" 판단 확인 후 `tmux -L hubtest kill-server`
-(4) KillMode=process 없이 실행하면 테스트 tmux가 사라지는 점을 이해하고, 실제 서비스 파일에 해당 설정이 있는지 확인
+    `tmux -L hubtest list-windows -t claude-rc` 확인 후 `tmux -L hubtest kill-server`
+(3) `systemctl --user restart claude-rc-restore.service` 로 실제 시작, 최신 로그 확인
+(4) 로그에 "대기 [hub]"가 있으면 hub 윈도우에 y 전송 후 "Connected" 확인
 
-## 4. 시작과 등록
-- `~/dev/.hub/restore.sh` 실행으로 `claude-rc` 세션과 hub 윈도우 시작
-- 폴더 신뢰 프롬프트가 뜨면 y 전송 후 "Connected" 확인
-- `systemctl --user daemon-reload && systemctl --user enable --now claude-rc-restore.service`
-- Linger=no면 `sudo loginctl enable-linger $USER` 실행 필요 사실을 나에게 알림
-
-## 5. 보고
+## 4. 보고
 - 배치한 파일 목록, 검증 결과, 허브 윈도우 연결 여부와 환경 이름
+- Linger=no면 `sudo loginctl enable-linger $USER` 실행 필요 사실을 나에게 알림
 - 이 머신의 특이사항은 메모리에 기록
 ```
 
@@ -234,6 +259,8 @@ systemd는 기본적으로 서비스의 메인 프로세스가 끝나면 같은 
 
 ```markdown
 # 허브 세션 지침
+
+플러그인 없이 쓰는 경우의 지침이다. `rc-hub` 플러그인을 설치했다면 이 파일은 필요 없다.
 
 이 폴더(`~/dev`)에서 실행되는 Claude Code 세션은 "허브 세션"이다. `~/dev`는 프로젝트 폴더만 모아두는 상위 폴더이고, 새 프로젝트 요청은 허브 세션이 처리한다. 프로젝트마다 tmux `claude-rc` 세션의 윈도우 1개와 그 안의 `claude rc` 프로세스 1개를 둔다.
 
@@ -274,36 +301,42 @@ systemd는 기본적으로 서비스의 메인 프로세스가 끝나면 같은 
 
 </details>
 
-허브 지침을 `~/dev/CLAUDE.md`에 두면 `~/dev`에서 시작하는 모든 Claude Code 세션이 이 지침을 자동으로 읽습니다. 그래서 재부팅 후 새로 연결된 허브 세션도 같은 역할을 이어받습니다.
-
 ## 8. 문제 해결
 
 | 증상 | 원인과 조치 |
 |---|---|
+| "프로젝트 만들어줘"에 스킬이 호출되지 않음 | 플러그인 설치 전에 시작한 세션. 세션에서 `/reload-plugins`를 입력하거나 hub 윈도우의 `claude rc`를 다시 시작. `claude plugin list`로 `rc-hub@hungryzoo`가 enabled인지 확인. |
+| 플러그인을 업데이트했는데 복구 스크립트가 그대로임 | 서비스는 `~/dev/.hub` 설치본을 실행. `/rc-hub:setup` 재실행으로 설치본 갱신. |
 | `tmux` 명령이 출력 없이 종료 | snap 설치 tmux의 `/snap/bin/tmux` 래퍼가 일부 환경에서 동작하지 않음. `/snap/tmux/current/usr/local/bin/tmux`를 직접 호출. 복구 스크립트는 자동 감지. |
 | 스크립트 종료 직후 tmux 세션이 사라짐 | 서비스 파일에 `KillMode=process` 누락. `systemd-run`으로 시험할 때도 `-p KillMode=process` 필요. |
 | 로그인하기 전까지 복구되지 않음 | linger 꺼짐. `sudo loginctl enable-linger "$USER"`. |
-| 윈도우가 신뢰 확인 프롬프트에서 멈춤 | 처음 실행하는 폴더. 로그에 "대기" 표시. 윈도우에서 `y` 입력. |
+| 로그에 "대기" 표시 | 처음 실행하는 폴더의 신뢰 확인 프롬프트. 해당 윈도우에서 `y` 입력. |
 | 스폰 모드 선택 질문이 뜸 | `--spawn=same-dir` 누락. 실행 명령 확인. |
 | 허브 세션의 tmux 명령이 소켓 오류로 실패 | Claude Code Bash 샌드박스가 `/tmp/tmux-<UID>/` 접근을 막음. tmux 명령만 샌드박스 해제로 실행하도록 허용. |
 | `git init -b main` 실패 | git 2.28 미만. `git init` 후 `git checkout -b main`. |
 | 커밋 시 사용자 정보 오류 | 전역 git 설정 없음. 레포 안에서 `git config user.name`, `git config user.email` 설정. |
-| 로그에 "Connected 미확인" | 네트워크 지연이나 로그인 만료. `tmux attach -t claude-rc`로 화면 확인 후 필요하면 `claude` 재로그인. |
+| 로그에 "경고", Connected 미확인 | 네트워크 지연이나 로그인 만료. `tmux attach -t claude-rc`로 화면 확인 후 필요하면 `claude auth login`. |
 
 ## 9. 파일 구조
 
 ```
 claude-rc-hub-session/
-├── README.md
+├── .claude-plugin/
+│   ├── plugin.json              # 플러그인 rc-hub 매니페스트
+│   └── marketplace.json         # 마켓플레이스 hungryzoo
+├── skills/
+│   ├── new-project/SKILL.md     # 프로젝트 세션 생성, 이름 변경, 제거
+│   └── setup/SKILL.md           # 초기 설정
 ├── hub/
+│   ├── install.sh               # 설치 스크립트
 │   ├── restore.sh               # 복구 스크립트 → ~/dev/.hub/restore.sh
 │   └── windows.tsv.example      # 윈도우 목록 예시
 ├── systemd/
 │   └── claude-rc-restore.service  # → ~/.config/systemd/user/
 ├── templates/
-│   └── CLAUDE.md                # 허브 지침 → ~/dev/CLAUDE.md
+│   └── CLAUDE.md                # 플러그인 없이 쓸 때의 허브 지침
 ├── prompts/
-│   └── setup-prompt.md          # 초기 설정 프롬프트
+│   └── setup-prompt.md          # 플러그인 없이 쓸 때의 초기 설정 프롬프트
 └── docs/images/                 # README 그림
 ```
 

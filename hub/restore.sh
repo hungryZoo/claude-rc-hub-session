@@ -12,12 +12,14 @@
 #   HUB_TMUX_BIN        tmux 실행 파일 경로 (기본 자동 감지)
 #   HUB_TMUX_SOCKET     tmux -L 소켓 이름 (테스트용)
 #   HUB_CMD             윈도우에서 실행할 명령 (기본 claude rc --spawn=same-dir)
+#   HUB_CHECK_TIMEOUT   연결 확인 대기 시간(초). 기본 60, HUB_CMD 지정 시 기본 0(확인 생략)
 set -u
 HUB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MANIFEST="${HUB_MANIFEST:-$HUB_DIR/windows.tsv}"
 SESSION="${HUB_SESSION:-claude-rc}"
 CMD="${HUB_CMD:-claude rc --spawn=same-dir}"
 DRY="${HUB_DRY_RUN:-0}"
+if [ -n "${HUB_CMD:-}" ]; then CHECK_TIMEOUT="${HUB_CHECK_TIMEOUT:-0}"; else CHECK_TIMEOUT="${HUB_CHECK_TIMEOUT:-60}"; fi
 LOG_DIR="$HUB_DIR/logs"
 mkdir -p "$LOG_DIR"
 LOG="$LOG_DIR/restore_$(date +%Y%m%d-%H%M%S).log"
@@ -69,7 +71,10 @@ while IFS=$'\t' read -r name dir || [ -n "$name" ]; do
     cur=$("${T[@]}" display-message -p -t "$target" '#{pane_current_command}')
     case "$cur" in
       claude) log "유지 [$name]: claude 실행 중"; continue ;;
-      bash|zsh|sh|fish) log "재실행 [$name]: 셸만 실행 중" ;;
+      bash|zsh|sh|fish)
+        log "재실행 [$name]: 셸만 실행 중"
+        # 이전 실행의 화면 출력이 연결 확인에 잡히지 않도록 화면 정리
+        run "${T[@]}" send-keys -t "$target" clear Enter ;;
       *) log "건너뜀 [$name]: 다른 프로그램 실행 중 ($cur)"; continue ;;
     esac
   fi
@@ -78,19 +83,31 @@ while IFS=$'\t' read -r name dir || [ -n "$name" ]; do
   [ "$DRY" = 1 ] || sleep 2
 done < "$MANIFEST"
 
-# 연결 상태 확인
-if [ "$DRY" != 1 ] && [ ${#started[@]} -gt 0 ] && [ -z "${HUB_CMD:-}" ]; then
-  sleep 15
+# 연결 상태 확인: 실행한 윈도우 화면을 3초 간격으로 확인, 최대 CHECK_TIMEOUT초 대기
+if [ "$DRY" != 1 ] && [ ${#started[@]} -gt 0 ] && [ "$CHECK_TIMEOUT" -gt 0 ]; then
+  declare -A state=()
+  deadline=$(( $(date +%s) + CHECK_TIMEOUT ))
+  while :; do
+    pending=0
+    for name in "${started[@]}"; do
+      [ -n "${state[$name]:-}" ] && continue
+      screen="$("${T[@]}" capture-pane -p -J -t "=$SESSION:=$name" 2>/dev/null)"
+      if grep -q 'Connected' <<<"$screen"; then
+        state[$name]=connected; log "연결 확인 [$name]"
+      elif grep -qE 'Trust .*\[y/N\]' <<<"$screen"; then
+        state[$name]=trust; log "대기 [$name]: 폴더 신뢰 확인 프롬프트. 해당 윈도우에 y 입력 필요"
+      else
+        pending=$((pending + 1))
+      fi
+    done
+    [ "$pending" -eq 0 ] && break
+    [ "$(date +%s)" -ge "$deadline" ] && break
+    sleep 3
+  done
   for name in "${started[@]}"; do
-    screen="$("${T[@]}" capture-pane -p -t "=$SESSION:=$name")"
-    if grep -q 'Connected' <<<"$screen"; then
-      log "연결 확인 [$name]"
-    elif grep -q 'Trust' <<<"$screen"; then
-      log "대기 [$name]: 폴더 신뢰 확인 프롬프트. tmux 윈도우에서 y 입력 필요"
-    else
-      log "경고 [$name]: Connected 미확인. 화면 마지막 줄:"
-      grep -v '^\s*$' <<<"$screen" | tail -3 | sed 's/^/    /'
-    fi
+    [ -n "${state[$name]:-}" ] && continue
+    log "경고 [$name]: ${CHECK_TIMEOUT}초 안에 Connected 미확인. 화면 마지막 줄:"
+    "${T[@]}" capture-pane -p -J -t "=$SESSION:=$name" 2>/dev/null | grep -v '^\s*$' | tail -3 | sed 's/^/    /'
   done
 fi
 

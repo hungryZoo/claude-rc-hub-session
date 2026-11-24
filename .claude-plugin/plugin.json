@@ -1,0 +1,13 @@
+{
+  "name": "rc-hub",
+  "displayName": "RC Hub",
+  "description": "Claude Code Remote Control 허브 세션. 프로젝트별 claude rc 세션 생성, 이름 변경, 제거와 재부팅 자동 복구 설치.",
+  "author": {
+    "name": "hungryZoo",
+    "url": "https://github.com/hungryZoo"
+  },
+  "homepage": "https://github.com/hungryZoo/claude-rc-hub-session",
+  "repository": "https://github.com/hungryZoo/claude-rc-hub-session",
+  "license": "MIT",
+  "keywords": ["remote-control", "tmux", "systemd", "project-setup"]
+}
